@@ -1,6 +1,6 @@
+#include<vector>
 #include <iostream>
-#include <vector>
-
+#include <bits/stdc++.h>
 using namespace std;
 
 // Function to split a matrix into quadrants

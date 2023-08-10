@@ -1,123 +1,97 @@
 #include<bits/stdc++.h>
-//author NguyenVanViet
+
 using namespace std;
 
-struct Point {
+struct Point{
     int x;
     int y;
 };
 
-// Function to calculate the Euclidean distance between two points
-double calculateDistance(const Point& p1, const Point& p2) {
-    int dx = p1.x - p2.x;
-    int dy = p1.y - p2.y;
-    return sqrt(dx * dx + dy * dy);
+double dist(const Point& a, const Point& b){
+    int dx = (a.x - b.x);
+    int dy = (a.y - b.y);
+    return sqrt(dx*dx + dy*dy);
 }
 
-// Function to compare points based on x-coordinate
-bool comparePointsX(const Point& p1, const Point& p2) {
-    return p1.x < p2.x;
+bool comparex(const Point& a, const Point& b){
+    return a.x < b.x;
 }
 
-// Function to compare points based on y-coordinate
-bool comparePointsY(const Point& p1, const Point& p2) {
-    return p1.y < p2.y;
+bool comparey(const Point& a, const Point& b){
+    return a.y < b.y;
 }
 
-// Function to find the closest pair of points in a given vector
-pair<Point, Point> closestPairHelper(const vector<Point>& Px, const vector<Point>& Py) {
+pair<Point,Point> ClosesetPairHelper(const vector<Point>& Px, const vector<Point>& Py){
     int n = Px.size();
+    
+    if(n == 2)  return make_pair(Px[0], Px[1]);
+    if(n == 3){
+        double dis1 = dist(Px[0], Px[1]);
+        double dis2 = dist(Px[0], Px[2]);
+        double dis3 = dist(Px[1], Px[2]);
 
-    // Base case: when there are only two points
-    if (n == 2) {
-        return make_pair(Px[0], Px[1]);
+        if(dis1<=dis2 && dis1<=dis3)  return make_pair(Px[0], Px[1]);
+        else if(dis2<=dis1 && dis2<=dis3) return make_pair(Px[0], Px[2]);
+        else return make_pair(Px[1], Px[2]);
     }
 
-    // Base case: when there are three points
-    if (n == 3) {
-        double dist1 = calculateDistance(Px[0], Px[1]);
-        double dist2 = calculateDistance(Px[1], Px[2]);
-        double dist3 = calculateDistance(Px[0], Px[2]);
+    int half = n/2;
+    vector<Point> Lx (Px.begin(), Px.begin() + half);
+    vector<Point> Ly (Px.begin(), Px.begin() + half);
+    vector<Point> Rx (Px.begin() + half, Px.end());
+    vector<Point> Ry (Px.begin() + half, Px.end());
 
-        if (dist1 <= dist2 && dist1 <= dist3) {
-            return make_pair(Px[0], Px[1]);
-        } else if (dist2 <= dist1 && dist2 <= dist3) {
-            return make_pair(Px[1], Px[2]);
-        } else {
-            return make_pair(Px[0], Px[2]);
-        }
-    }
+    sort(Lx.begin(), Lx.end(), comparex);
+    sort(Ly.begin(), Ly.end(), comparey);
+    sort(Rx.begin(), Rx.end(), comparex);
+    sort(Ry.begin(), Ry.end(), comparey);
 
-    // Divide the points into two halves
-    int half = n / 2;
-    vector<Point> Lx(Px.begin(), Px.begin() + half);
-    vector<Point> Ly(Px.begin(), Px.begin() + half);
-    vector<Point> Rx(Px.begin() + half, Px.end());
-    vector<Point> Ry(Px.begin() + half, Px.end());
+    pair<Point,Point> RightPoints = ClosesetPairHelper(Rx, Ry);
+    pair<Point,Point> LeftPoints = ClosesetPairHelper(Lx, Ly);
+    double mindistance = min(dist(RightPoints.first, RightPoints.second), dist(LeftPoints.first, LeftPoints.second));
 
-    // Sort the points by x-coordinate and y-coordinate
-    sort(Lx.begin(), Lx.end(), comparePointsX);
-    sort(Ly.begin(), Ly.end(), comparePointsY);
-    sort(Rx.begin(), Rx.end(), comparePointsX);
-    sort(Ry.begin(), Ry.end(), comparePointsY);
-
-    // Recursive calls
-    pair<Point, Point> leftPair = closestPairHelper(Lx, Ly);
-    pair<Point, Point> rightPair = closestPairHelper(Rx, Ry);
-
-    // Find the minimum distance and the corresponding points between the left and right pairs
-    double minDistance = min(calculateDistance(leftPair.first, leftPair.second),
-                             calculateDistance(rightPair.first, rightPair.second));
-    pair<Point, Point> splitPair = {Point(),Point()};
-
-    // Prepare the points for the strip
+    pair<Point,Point> splitpair;
     vector<Point> Sy;
-    int midX = Px[half].x;
-
-    for (const Point& point : Py) {
-        if (abs(point.x - midX) < minDistance) {
+    int midx = Px[half].x;
+    for(const Point& point : Py){
+        if(abs(point.x - midx) < mindistance){
             Sy.push_back(point);
         }
     }
 
-    // Find the closest split pair
-    for (size_t i = 0; i < Sy.size(); ++i) {
-        for (size_t j = i + 1; j < Sy.size() && (Sy[j].y - Sy[i].y) < minDistance; ++j) {
-            double distance = calculateDistance(Sy[i], Sy[j]);
-            minDistance = distance;
-            splitPair = make_pair(Sy[i], Sy[j]);
+    for(int i = 0; i < Sy.size(); i++){
+        //int StripPoints = min(7,n-i);
+        for(int j = i+1; j<Sy.size() && Sy[j].y-Sy[i].y < mindistance; j++){
+            if(dist(Sy[j],Sy[i]) < mindistance){
+                mindistance = dist(Sy[j],Sy[i]);
+                splitpair = make_pair(Sy[j],Sy[i]);  
+            }
         }
     }
 
-    // Return the pair with the minimum distance
-    if (calculateDistance(leftPair.first, leftPair.second) == minDistance) {
-        return leftPair;
-    } else if (calculateDistance(rightPair.first, rightPair.second) == minDistance) {
-        return rightPair;
-    } else {
-        return splitPair;
-    }
+    if(dist(LeftPoints.first,LeftPoints.second) == mindistance) return LeftPoints;
+    else if(dist(RightPoints.first,RightPoints.second) == mindistance) return RightPoints;
+    else return splitpair;
 }
 
-// Function to find the closest pair of points using the ClosestPair algorithm
-pair<Point, Point> closestPair(const vector<Point>& points) {
-    // Create copies of points sorted by x-coordinate and y-coordinate
-    vector<Point> Px(points);
-    vector<Point> Py(points);
-    sort(Px.begin(), Px.end(), comparePointsX);
-    sort(Py.begin(), Py.end(), comparePointsY);
-    for(Point i : Px){
-        cout<<i.x<<" "<<i.y<<"\n";
+pair<Point,Point> ClosestPair(const vector<Point>& points){
+    vector<Point> Px (points.begin(), points.end());
+    vector<Point> Py (points.begin(), points.end());
+
+    sort(Px.begin(), Px.end(), comparex);
+    sort(Py.begin(), Py.end(), comparey);
+
+    for(const Point& points : Px){
+        cout<<points.x<<" "<<points.y<<"\n";
     }
 
-    return closestPairHelper(Px, Py);
+    return ClosesetPairHelper(Px,Py);
 }
 
-int main() {
-    // Example usage
-    vector<Point> points = {{119, 120}, {3, 40}, {5, 6}, {8, 9}, {19, 20}};
+int main(){
+    vector<Point> points = {{-2, -1}, {2, 3}, {6, 6}, {19, 20}};
 
-    pair<Point, Point> closest = closestPair(points);
+    pair<Point, Point> closest = ClosestPair(points);
 
     cout << "Closest pair of points: (" << closest.first.x << ", " << closest.first.y << ") and ("
          << closest.second.x << ", " << closest.second.y << ")" << endl;
